@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Project Manager</title>
+    <style>
+        /* * DESIGN SYSTEM & VARIABLES 
+         * Based on Strict Adherence to Brand Guidelines
+         */
+        :root {
+            /* Core Colors */
+            --water-blue: #1e29f5;
+            --deep-water-navy: #00416e;
+            --white: #ffffff;
+            
+            /* Supporting Brights */
+            --dawn-yellow: #ffd400;
+            --rose-pink: #ff8cb4;
+            --sunset-orange: #ff8700;
+
+            /* Supporting Rich */
+            --apple-green: #afe15a;
+            --grass-green: #00b45a;
+            --sky-blue: #33d8ff;
+            --lilac: #a88fee;
+            --thistle-purple: #4b3184;
+
+            /* UI Neutrals */
+            --bg-body: #f4f6f8;
+            --border-light: #e0e0e0;
+            --text-main: #00416e; /* Deep Navy for text per requirements */
+            --text-light: #5a6b7c;
+
+            /* Font */
+            --font-stack: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Geometric fallback */
+        }
+
+        /* RESET & BASE */
+        * { box-sizing: border-box; outline: none; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TYPOGRAPHY */
+        h1, h2, h3, h4 { margin: 0; font-weight: 700; color: var(--deep-water-navy); }
+        h1 { font-size: 24px; }
+        h2 { font-size: 20px; margin-bottom: 16px; }
+        h3 { font-size: 16px; margin-bottom: 12px; }
+        p, span, div { font-size: 14px; line-height: 1.5; }
+        label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 12px; color: var(--text-light); }
+
+        /* LAYOUT UTILITIES */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-1 { gap: 8px; }
+        .gap-2 { gap: 16px; }
+        .w-full { width: 100%; }
+        .mt-2 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 16px; }
+        .p-2 { padding: 16px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+        /* HEADER */
+        header {
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border-light);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            flex-shrink: 0;
+        }
+
+        .logo { font-size: 18px; font-weight: 900; color: var(--deep-water-navy); letter-spacing: -0.5px; }
+        .nav-btn { cursor: pointer; color: var(--water-blue); font-weight: 600; font-size: 14px; text-decoration: none; }
+        .nav-btn:hover { text-decoration: underline; }
+
+        /* MAIN AREA */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: block;
+        }
+
+        /* CARDS & CONTAINERS */
+        .card {
+            background: var(--white);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: transform 0.1s ease;
+        }
+        .card.interactive:hover { border-color: var(--water-blue); cursor: pointer; }
+        
+        /* BUTTONS */
+        .btn {
+            border: none;
+            border-radius: 4px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: var(--water-blue); color: white; }
+        .btn-secondary { background: var(--bg-body); color: var(--deep-water-navy); border: 1px solid var(--border-light); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-danger { background: white; color: var(--rose-pink); border: 1px solid var(--border-light); }
+
+        /* FORMS */
+        input[type="text"], input[type="date"], input[type="email"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            font-family: var(--font-stack);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--water-blue); }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: white; padding: 24px; border-radius: 8px; width: 450px; max-width: 90%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 90vh; overflow-y: auto; /* Added for longer forms */
+        }
+        .modal h3 { margin-top: 0; color: var(--deep-water-navy); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+        /* BUDGET TRACKER STYLES */
+        .budget-summary {
+            background: #f8f9fa; border: 1px solid var(--border-light); padding: 12px; border-radius: 4px; margin-bottom: 12px;
+        }
+        .budget-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+        .budget-total { font-weight: 700; color: var(--deep-water-navy); border-top: 1px solid #ddd; padding-top: 4px; margin-top: 4px; }
+        .cost-item {
+            border-bottom: 1px solid #eee; padding: 8px 0;
+        }
+        .cost-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 2px;}
+        .cost-meta { font-size: 10px; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .cost-tag { background: #eee; padding: 1px 4px; border-radius: 2px; }
+        .invoiced-badge { color: var(--grass-green); font-weight: 700; }
+        .not-invoiced-badge { color: var(--sunset-orange); }
+
+        /* STATUS TAGS */
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        /* Status Colors */
+        .status-not-started { background: #eee; color: #666; }
+        .status-in-progress { background: var(--dawn-yellow); color: var(--deep-water-navy); }
+        .status-on-hold { background: var(--lilac); color: white; }
+        .status-completed { background: var(--grass-green); color: white; }
+        .status-archived { background: #ddd; color: #888; border: 1px solid #ccc; }
+
+        /* PRIORITY COLORS */
+        .prio-low { color: var(--text-light); }
+        .prio-medium { color: var(--sunset-orange); font-weight: 600; }
+        .prio-high { color: var(--sunset-orange); font-weight: 700; }
+        .prio-urgent { color: var(--rose-pink); font-weight: 800; }
+
+        /* METRICS BAR */
+        .metrics-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
+        .metric-card { background: var(--white); padding: 16px; border-radius: 4px; border: 1px solid var(--border-light); }
+        .metric-value { font-size: 24px; font-weight: 700; color: var(--water-blue); display: block; margin-bottom: 4px; }
+        .metric-label { font-size: 11px; text-transform: uppercase; color: var(--text-light); }
+
+        /* LISTS & TABLES */
+        .list-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .list-row:last-child { border-bottom: none; }
+        
+        /* TABS */
+        .tabs { border-bottom: 1px solid var(--border-light); margin-bottom: 20px; display: flex; gap: 24px; }
+        .tab { 
+            padding-bottom: 12px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            color: var(--text-light);
+            position: relative;
+        }
+        .tab.active { color: var(--water-blue); }
+        .tab.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--water-blue);
+        }
+
+        /* UTILS */
+        .hidden { display: none !important; }
+        .warning-banner {
+            background: #fff3cd; color: #856404; padding: 10px 24px; font-size: 12px; text-align: center; border-bottom: 1px solid #ffeeba;
+        }
+
+        /* SVG ICONS (Offline Safe) */
+        .icon { width: 16px; height: 16px; vertical-align: middle; fill: currentColor; }
+
+    </style>
+</head>
+<body>
+
+    <!-- DATA WARNING -->
+    <div class="warning-banner">
+        ⚠️ Data is stored in your browser's Local Storage. Clearing browser data will delete all projects.
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">INTERNAL PM APP</div>
+        <nav>
+            <a id="nav-dashboard" class="nav-btn hidden" onclick="app.router('dashboard')">← Back to Dashboard</a>
+        </nav>
+        <div style="font-size: 12px; color: var(--text-light);" id="current-date-display"></div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main id="app-root">
+        <!-- Views will be injected here via JavaScript -->
+    </main>
+
+    <!-- MODAL CONTAINER (Populated via JS) -->
+    <div id="modal-layer" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 id="modal-title">Title</h3>
+            <div id="modal-content"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="modal-cancel-btn" onclick="Modal.close()">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+/**
+ * SENIOR ENGINEER NOTES:
+ * 1. Architecture: Single Global State object (appData).
+ * 2. Persistence: LocalStorage via JSON.stringify.
+ * 3. Priority Logic: 'runHeuristics' runs on load/save to auto-upgrade task priorities.
+ * 4. No external dependencies.
+ * 5. MODAL SYSTEM: Replaces prompt/alert to work in all environments.
+ */
+
+/* --- DATA MODEL & STATE --- */
+const Utils = {
+    uid: () => Date.now().toString(36) + Math.random().toString(36).substr(2),
+    formatDate: (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    daysUntil: (d) => {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const target = new Date(d);
+        const diffTime = target - today;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    },
+    formatCurrency: (amount) => {
+        return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
+    }
+};
+
+// Initial State Template
+const initialState = {
+    projects: [], // { id, title, concept, brief, status, links: [], stakeholders: [], perIds: [], budget: 0, costs: [], created: ts, archived: bool }
+    tasks: [],    // { id, projectId, title, desc, due, priority, completed, created: ts }
+    meetings: [], // { id, projectId, title, date, attendees, notes, transcript: str, actions: [], links: [] }
+    pers: [],     // { id, title, period, desc, completed: bool }
+    history: []   // { id, projectId, text, timestamp }
+};
+
+let state = JSON.parse(localStorage.getItem('pm_app_data')) || initialState;
+
+const Store = {
+    save: () => {
+        // Run Logic rules before saving
+        Logic.updatePriorities();
+        Logic.checkPERCompletion();
+        localStorage.setItem('pm_app_data', JSON.stringify(state));
+        View.render(); // Re-render to show updates
+    },
+    addHistory: (projectId, text) => {
+        state.history.unshift({
+            id: Utils.uid(),
+            projectId,
+            text,
+            timestamp: new Date().toISOString()
+        });
+    },
+    getProject: (id) => state.projects.find(p => p.id === id),
+    getProjectTasks: (pid) => state.tasks.filter(t => t.projectId === pid),
+    getProjectMeetings: (pid) => state.meetings.filter(m => m.projectId === pid),
+    getProjectPERs: (pid) => state.pers.filter(per => state.projects.find(p => p.id === pid).perIds.includes(per.id)),
+};
+
+const Logic = {
+    updatePriorities: () => {
+        state.tasks.forEach(task => {
+            if (!task.completed && task.due) {
+                const days = Utils.daysUntil(task.due);
+                // Rule: If due today or overdue -> Urgent
+                if (days <= 0 && task.priority !== 'Urgent') {
+                    task.priority = 'Urgent';
+                }
+                // Rule: If due within 7 days -> High (unless already Urgent)
+                else if (days <= 7 && days > 0 && task.priority !== 'Urgent' && task.priority !== 'High') {
+                    task.priority = 'High';
+                }
+            }
+        });
+    },
+    checkPERCompletion: () => {
+        state.pers.forEach(per => {
+            // Find all projects linked to this PER
+            const linkedProjects = state.projects.filter(p => p.perIds && p.perIds.includes(per.id));
+            if (linkedProjects.length === 0) {
+                per.completed = false;
+                return;
+            }
+            // Check if ALL are completed or archived
+            const allDone = linkedProjects.every(p => p.status === 'Completed' || p.status === 'Archived');
+            per.completed = allDone;
+        });
+    }
+};
+
+/* --- VIEW ENGINE --- */
+const app = {
+    currentView: 'dashboard',
+    currentProjectId: null,
+
+    init: () => {
+        document.getElementById('current-date-display').innerText = Utils.formatDate(new Date());
+        Logic.updatePriorities(); // Run logic on load
+        app.router('dashboard');
+    },
+
+    router: (view, param = null) => {
+        app.currentView = view;
+        app.currentProjectId = param;
+        const nav = document.getElementById('nav-dashboard');
+        
+        if (view === 'dashboard') {
+            nav.classList.add('hidden');
+            View.renderDashboard();
+        } else if (view === 'project') {
+            nav.classList.remove('hidden');
+            View.renderProject(param);
+        }
+    }
+};
+
+const Modal = {
+    activeCallback: null,
+    
+    close: () => {
+        document.getElementById('modal-layer').classList.add('hidden');
+        document.getElementById('modal-content').innerHTML = '';
+        document.getElementById('modal-confirm-btn').classList.remove('hidden'); // Reset visibility
+        document.getElementById('modal-cancel-btn').innerText = "Cancel"; // Reset text
+        Modal.activeCallback = null;
+    },
+
+    // Show generic info with no inputs
+    showInfo: (title, htmlContent) => {
+         const modal = document.getElementById('modal-layer');
+         document.getElementById('modal-title').innerText = title;
+         document.getElementById('modal-content').innerHTML = htmlContent;
+         
+         // Setup buttons for Info Mode
+         document.getElementById('modal-confirm-btn').classList.add('hidden');
+         document.getElementById('modal-cancel-btn').innerText = "Close";
+         
+         modal.classList.remove('hidden');
+    },
+
+    // Generic form generator
+    showForm: (title, fields, callback) => {
+        const modal = document.getElementById('modal-layer');
+        const titleEl = document.getElementById('modal-title');
+        const contentEl = document.getElementById('modal-content');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+
+        titleEl.innerText = title;
+        contentEl.innerHTML = '';
+        Modal.activeCallback = callback;
+
+        // Build inputs
+        fields.forEach(f => {
+            const wrapper = document.createElement('div');
+            const label = document.createElement('label');
+            label.innerText = f.label;
+            
+            let input;
+            if (f.type === 'textarea') {
+                input = document.createElement('textarea');
+                input.rows = 3;
+            } else if (f.type === 'select') {
+                input = document.createElement('select');
+                f.options.forEach(opt => {
+                    const o = document.createElement('option');
+                    o.value = opt.value;
+                    o.innerText = opt.label;
+                    if(opt.value === f.value) o.selected = true;
+                    input.appendChild(o);
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = f.type || 'text';
+            }
+            
+            input.id = `input-${f.name}`;
+            input.name = f.name;
+            if (f.value) input.value = f.value;
+            if (f.placeholder) input.placeholder = f.placeholder;
+            
+            wrapper.appendChild(label);
+            wrapper.appendChild(input);
+            contentEl.appendChild(wrapper);
+        });
+
+        // Handle Confirm
+        confirmBtn.onclick = () => {
+            const data = {};
+            fields.forEach(f => {
+                const el = document.getElementById(`input-${f.name}`);
+                data[f.name] = el.value;
+            });
+            if (Modal.activeCallback) Modal.activeCallback(data);
+            Modal.close();
+        };
+
+        modal.classList.remove('hidden');
+    }
+};
+
+const View = {
+    render: () => {
+        if (app.currentView === 'dashboard') View.renderDashboard();
+        else View.renderProject(app.currentProjectId);
+    },
+
+    renderDashboard: () => {
+        const root = document.getElementById('app-root');
+        
+        // Metrics
+        const activeProjects = state.projects.filter(p => p.status === 'In Progress').length;
+        const urgentTasks = state.tasks.filter(t => !t.completed && t.priority === 'Urgent').length;
+        const totalOpenTasks = state.tasks.filter(t => !t.completed).length;
+        const perActive = state.pers.filter(p => !p.completed).length;
+
+        // Finance Calculations
+        let globalBudget = 0;
+        let globalSpend = 0;
+        state.projects.forEach(p => {
+            globalBudget += parseFloat(p.budget || 0);
+            if(p.costs) {
+                p.costs.forEach(c => globalSpend += parseFloat(c.amount || 0));
+            }
+        });
+        const globalRemaining = globalBudget - globalSpend;
+
+        // Sort Projects
+        const statusWeight = { 'In Progress': 1, 'On Hold': 2, 'Not Started': 3, 'Completed': 4, 'Archived': 5 };
+        const sortedProjects = [...state.projects].sort((a,b) => statusWeight[a.status] - statusWeight[b.status]);
+
+        // Global Tasks
+        const priorityWeight = { 'Urgent': 1, 'High': 2, 'Medium': 3, 'Low': 4 };
+        const globalTasks = state.tasks.filter(t => !t.completed)
+            .sort((a,b) => priorityWeight[a.priority] - priorityWeight[b.priority])
+            .slice(0, 10); 
+
+        let html = `
+            <!-- METRICS -->
+            <div class="metrics-bar">
+                <div class="metric-card"><span class="metric-value">${state.projects.length}</span><span class="metric-label">Total Projects</span></div>
+                <div class="metric-card"><span class="metric-value">${activeProjects}</span><span class="metric-label">In Progress</span></div>
+                <div class="metric-card"><span class="metric-value" style="color:var(--rose-pink)">${urgentTasks}</span><span class="metric-label">Urgent Tasks</span></div>
+                <div class="metric-card"><span class="metric-value">${totalOpenTasks}</span><span class="metric-label">Open Tasks</span></div>
+                <div class="metric-card"><span class="metric-value">${perActive}</span><span class="metric-label">Active PERs</span></div>
+                <div class="metric-card" onclick="Actions.managePERs()" style="cursor:pointer; background:var(--bg-body); border-style:dashed;">
+                    <span class="metric-value" style="font-size:14px; color:var(--deep-water-navy)">+ Manage PERs</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- PROJECT LIST -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h2>Projects</h2>
+                        <button class="btn btn-primary" onclick="Actions.createProject()">+ New Project</button>
+                    </div>
+                    <input type="text" id="proj-search" placeholder="Search projects..." onkeyup="View.renderDashboard()" class="mb-2">
+                    
+                    ${sortedProjects.length === 0 ? '<p>No projects found.</p>' : ''}
+                    ${sortedProjects.map(p => {
+                        const searchVal = document.getElementById('proj-search') ? document.getElementById('proj-search').value.toLowerCase() : '';
+                        if(searchVal && !p.title.toLowerCase().includes(searchVal) && !p.concept.toLowerCase().includes(searchVal)) return '';
+
+                        const pTasks = Store.getProjectTasks(p.id);
+                        const open = pTasks.filter(t => !t.completed).length;
+                        const urgent = pTasks.filter(t => !t.completed && t.priority === 'Urgent').length;
+                        
+                        return `
+                        <div class="card interactive" onclick="app.router('project', '${p.id}')">
+                            <div class="flex justify-between">
+                                <strong>${p.title}</strong>
+                                <span class="tag status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span>
+                            </div>
+                            <p style="color:var(--text-light); margin: 8px 0;">${p.concept}</p>
+                            <div class="flex gap-2" style="font-size:11px; color:var(--text-light)">
+                                <span>Tasks: ${open} open</span>
+                                ${urgent > 0 ? `<span style="color:var(--rose-pink)">${urgent} Urgent</span>` : ''}
+                            </div>
+                        </div>
+                        `
+                    }).join('')}
+                </div>
+
+                <!-- GLOBAL DASHBOARD RIGHT COL -->
+                <div>
+                    <!-- FINANCE OVERVIEW -->
+                    <div class="card">
+                        <h3>Finance Overview</h3>
+                        <div class="budget-summary">
+                            <div class="budget-row">
+                                <span>Total Budget (All Projects):</span>
+                                <span>${Utils.formatCurrency(globalBudget)}</span>
+                            </div>
+                            <div class="budget-row">
+                                <span>Total Spend So Far:</span>
+                                <span style="font-weight:700; color:var(--deep-water-navy);">${Utils.formatCurrency(globalSpend)}</span>
+                            </div>
+                            <div class="budget-row budget-total">
+                                <span>Total Remaining:</span>
+                                <span style="color:${globalRemaining < 0 ? 'var(--rose-pink)' : 'var(--grass-green)'}">${Utils.formatCurrency(globalRemaining)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PER TRACKER -->
+                    <div class="card">
+                        <h3>PER Objectives Tracker</h3>
+                        ${state.pers.length === 0 ? '<p style="font-style:italic">No PERs defined.</p>' : ''}
+                        ${state.pers.map(per => {
+                            const linked = state.projects.filter(p => p.perIds && p.perIds.includes(per.id));
+                            const done = linked.filter(p => p.status === 'Completed' || p.status === 'Archived').length;
+                            const total = linked.length;
+                            const pct = total === 0 ? 0 : Math.round((done/total)*100);
+                            
+                            return `
+                            <div class="list-row justify-between interactive" title="Click to view linked projects" onclick="Actions.viewPERDetails('${per.id}')">
+                                <div>
+                                    <strong>${per.title}</strong> <span style="font-size:11px">(${per.period})</span>
+                                    <div style="font-size:11px; color:#888;">${done} of ${total} projects completed</div>
+                                </div>
+                                <div style="text-align:right">
+                                    <span class="tag ${per.completed ? 'status-completed' : 'status-in-progress'}">${per.completed ? 'Completed' : 'In Progress'}</span>
+                                    <div style="font-size:10px; margin-top:2px;">${pct}%</div>
+                                </div>
+                            </div>`
+                        }).join('')}
+                    </div>
+
+                    <!-- URGENT TASKS -->
+                    <div class="card">
+                        <h3>Top Priority Tasks (Global)</h3>
+                        ${globalTasks.map(t => {
+                            const p = Store.getProject(t.projectId);
+                            return `
+                            <div class="list-row interactive" style="display:block" title="Go to Project" onclick="app.router('project', '${t.projectId}')">
+                                <div class="flex justify-between">
+                                    <span class="${t.priority === 'Urgent' ? 'prio-urgent' : 'prio-high'}">${t.title}</span>
+                                    <span style="font-size:11px; color:#888">${Utils.formatDate(t.due)}</span>
+                                </div>
+                                <div style="font-size:11px; color:var(--water-blue)">${p ? p.title : 'Unknown Project'}</div>
+                            </div>
+                            `
+                        }).join('')}
+                        ${globalTasks.length === 0 ? '<p>No outstanding high priority tasks.</p>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        root.innerHTML = html;
+        
+        const searchInput = document.getElementById('proj-search');
+        if(searchInput) {
+             const val = searchInput.value;
+             searchInput.focus();
+        }
+    },
+
+    renderProject: (pid) => {
+        const root = document.getElementById('app-root');
+        const p = Store.getProject(pid);
+        if (!p) { app.router('dashboard'); return; }
+
+        const tasks = Store.getProjectTasks(pid);
+        const meetings = Store.getProjectMeetings(pid);
+        const open = tasks.filter(t => !t.completed);
+        const completed = tasks.filter(t => t.completed);
+
+        // Budget Calculations
+        const budgetTotal = parseFloat(p.budget || 0);
+        const costs = p.costs || [];
+        const totalSpent = costs.reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
+        const remaining = budgetTotal - totalSpent;
+
+        root.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <h1 style="font-size:28px; margin-bottom:4px;">${p.title}</h1>
+                    <div class="flex items-center gap-2">
+                        <span class="tag status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span>
+                        <span style="font-size:12px; color:#666">Concept: ${p.concept}</span>
+                    </div>
+                </div>
+                <div class="flex gap-1">
+                    <button class="btn btn-secondary" onclick="Actions.editProject('${p.id}')">Edit Details</button>
+                    ${p.status !== 'Archived' ? `<button class="btn btn-primary" onclick="Actions.addTask('${p.id}')">+ Add Task</button>` : ''}
+                </div>
+            </div>
+
+            <!-- TABS & CONTENT -->
+            <div class="grid-3">
+                
+                <!-- LEFT COL: INFO, DOCS & BUDGET -->
+                <div>
+                    <div class="card">
+                        <h3>Brief</h3>
+                        <p>${p.brief || 'No brief added.'}</p>
+                    </div>
+
+                    <!-- NEW BUDGET SECTION -->
+                    <div class="card">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3>Budget & Costs</h3>
+                            <button class="btn btn-sm btn-secondary" onclick="Actions.addCost('${p.id}')">+ Cost</button>
+                        </div>
+                        
+                        <div class="budget-summary">
+                            <div class="budget-row">
+                                <span>Project Budget:</span>
+                                <span style="cursor:pointer; color:var(--water-blue)" onclick="Actions.updateBudget('${p.id}')">${Utils.formatCurrency(budgetTotal)} ✎</span>
+                            </div>
+                            <div class="budget-row">
+                                <span>Total Spent:</span>
+                                <span>${Utils.formatCurrency(totalSpent)}</span>
+                            </div>
+                            <div class="budget-row budget-total">
+                                <span>Remaining:</span>
+                                <span style="color:${remaining < 0 ? 'var(--rose-pink)' : 'var(--grass-green)'}">${Utils.formatCurrency(remaining)}</span>
+                            </div>
+                        </div>
+
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            ${costs.length === 0 ? '<p style="font-size:11px; color:#888;">No costs recorded.</p>' : ''}
+                            ${costs.map(c => `
+                                <div class="cost-item">
+                                    <div class="cost-header">
+                                        <span>${c.desc}</span>
+                                        <span>${Utils.formatCurrency(c.amount)}</span>
+                                    </div>
+                                    <div class="cost-meta">
+                                        <span>📅 ${Utils.formatDate(c.date)}</span>
+                                        <span>Month: ${c.month}</span>
+                                        <span>🛒 ${c.cart || '-'}</span>
+                                        <span>PO: ${c.po || '-'}</span>
+                                        <span class="${c.invoiced ? 'invoiced-badge' : 'not-invoiced-badge'}">
+                                            ${c.invoiced ? '✓ Invoiced' : '⚠ Pending Inv.'}
+                                        </span>
+                                        <span style="text-align:right; color:red; cursor:pointer;" onclick="Actions.deleteCost('${p.id}', '${c.id}')">Remove</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="flex justify-between items-center">
+                            <h3>Project Links</h3>
+                            <button class="btn btn-sm btn-secondary" onclick="Actions.addLink('${p.id}')">+</button>
+                        </div>
+                        ${(p.links || []).map(l => `
+                            <div class="list-row">
+                                <a href="${l.url}" target="_blank" style="color:var(--water-blue); text-decoration:none;">🔗 ${l.label}</a>
+                                <span style="font-size:10px; cursor:pointer; color:red; margin-left:auto" onclick="Actions.deleteLink('${p.id}', '${l.id}')">×</span>
+                            </div>
+                        `).join('')}
+                        ${(!p.links || p.links.length === 0) ? '<p style="font-size:12px; color:#888">No folders linked.</p>' : ''}
+                    </div>
+
+                     <div class="card">
+                        <div class="flex justify-between items-center">
+                            <h3>Stakeholders & Contacts</h3>
+                            <button class="btn btn-sm btn-secondary" onclick="Actions.addContact('${p.id}')">+</button>
+                        </div>
+                        ${(p.stakeholders || []).map(s => `
+                            <div class="list-row" style="display:block">
+                                <strong>${s.name}</strong> <span style="font-size:11px">(${s.role})</span><br>
+                                <a href="mailto:${s.email}" style="font-size:12px">${s.email}</a>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- MIDDLE COL: TASKS -->
+                <div>
+                    <div class="card">
+                        <h3>Active Tasks (${open.length})</h3>
+                        ${open.sort((a,b) => new Date(a.due) - new Date(b.due)).map(t => `
+                            <div class="list-row items-center">
+                                <input type="checkbox" onchange="Actions.toggleTask('${t.id}')">
+                                <div style="margin-left:10px; flex:1">
+                                    <div class="${t.priority === 'Urgent' ? 'prio-urgent' : ''}">${t.title}</div>
+                                    <div style="font-size:11px; color:#888">Due: ${Utils.formatDate(t.due)} <span class="tag" style="font-size:9px; margin-left:4px">${t.priority}</span></div>
+                                    ${t.desc ? `<div style="font-size:10px; color:#aaa; margin-top:2px;">${t.desc}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="card" style="opacity:0.7">
+                        <h3>Completed Tasks (${completed.length})</h3>
+                         ${completed.map(t => `
+                            <div class="list-row items-center">
+                                <input type="checkbox" checked onchange="Actions.toggleTask('${t.id}')">
+                                <div style="margin-left:10px; text-decoration:line-through; color:#888">${t.title}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- RIGHT COL: MEETINGS & HISTORY -->
+                <div>
+                     <div class="card">
+                        <div class="flex justify-between items-center">
+                            <h3>Meetings</h3>
+                            <button class="btn btn-sm btn-secondary" onclick="Actions.addMeeting('${p.id}')">+</button>
+                        </div>
+                        ${meetings.map(m => `
+                            <div class="list-row" style="display:block">
+                                <strong>${m.title}</strong><br>
+                                <span style="font-size:11px">${Utils.formatDate(m.date)} - ${m.attendees}</span>
+                                <div style="font-size:11px; margin-top:4px; color:#555;"><strong>Notes:</strong> ${m.notes.substring(0, 50)}${m.notes.length > 50 ? '...' : ''}</div>
+                                
+                                <details style="margin-top:4px;">
+                                    <summary style="font-size:11px; cursor:pointer; color:var(--text-light);">View Transcript</summary>
+                                    <div style="font-size:11px; color:#666; padding:8px; background:#f5f5f5; border-radius:4px; margin-top:4px; white-space:pre-wrap;">${m.transcript || 'No transcript recorded.'}</div>
+                                </details>
+
+                                <!-- Actions within meeting -->
+                                <div style="margin-top:6px; padding-top:6px; border-top:1px dashed #eee;">
+                                    ${(m.actions || []).map(a => `
+                                        <div style="font-size:10px; display:flex; justify-content:space-between; margin-bottom:2px;">
+                                            <span>• ${a.text}</span>
+                                            ${!a.converted ? `<a onclick="Actions.convertActionToTask('${p.id}', '${m.id}', '${a.id}')" style="cursor:pointer; color:var(--water-blue)">→ Task</a>` : '<span style="color:#aaa">Converted</span>'}
+                                        </div>
+                                    `).join('')}
+                                    <div class="flex justify-between mt-2">
+                                        <button style="border:none; background:none; color:var(--water-blue); font-size:10px; padding:0; cursor:pointer;" onclick="Actions.addActionItem('${p.id}', '${m.id}')">+ Action Item</button>
+                                        <button style="border:none; background:none; color:var(--deep-water-navy); font-weight:700; font-size:10px; padding:0; cursor:pointer;" onclick="Actions.addTask('${p.id}', 'Ref: Meeting ${m.title}')">+ Add Task</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${meetings.length === 0 ? '<p>No meetings recorded.</p>' : ''}
+                    </div>
+
+                    <div class="card" style="background:#fafafa">
+                        <h3>Project History</h3>
+                        <div style="max-height:200px; overflow-y:auto;">
+                            ${state.history.filter(h => h.projectId === pid).map(h => `
+                                <div style="font-size:11px; margin-bottom:6px; color:#666; border-bottom:1px solid #eee; padding-bottom:4px;">
+                                    <strong>${Utils.formatDate(h.timestamp)}:</strong> ${h.text}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+};
+
+/* --- ACTIONS & MODALS --- */
+const Actions = {
+    createProject: () => {
+        Modal.showForm('New Project', [
+            { label: 'Project Title', name: 'title', type: 'text' },
+            { label: 'Concept (One-liner)', name: 'concept', type: 'text' }
+        ], (data) => {
+            if(!data.title) return;
+            const newProj = {
+                id: Utils.uid(),
+                title: data.title,
+                concept: data.concept || '',
+                brief: '',
+                status: 'Not Started',
+                links: [],
+                stakeholders: [],
+                perIds: [],
+                created: new Date().toISOString()
+            };
+            state.projects.push(newProj);
+            Store.addHistory(newProj.id, "Project Created");
+            Store.save();
+            app.router('project', newProj.id);
+        });
+    },
+
+    editProject: (pid) => {
+        const p = Store.getProject(pid);
+        
+        // Prepare PER options
+        const perOptions = state.pers.map(per => ({ value: per.id, label: per.title }));
+        
+        Modal.showForm('Edit Project Details', [
+            { label: 'Project Title', name: 'title', type: 'text', value: p.title },
+            { label: 'Concept', name: 'concept', type: 'text', value: p.concept },
+            { label: 'Brief', name: 'brief', type: 'textarea', value: p.brief },
+            { label: 'Status', name: 'status', type: 'select', value: p.status, options: [
+                {value: 'Not Started', label: 'Not Started'},
+                {value: 'In Progress', label: 'In Progress'},
+                {value: 'On Hold', label: 'On Hold'},
+                {value: 'Completed', label: 'Completed'},
+                {value: 'Archived', label: 'Archived'}
+            ]},
+             { label: 'Link PER (Comma separated IDs - Prototype)', name: 'perIds', type: 'text', value: p.perIds.join(','), placeholder: 'Enter PER IDs manually (Prototype)' }
+        ], (data) => {
+            if (data.title) p.title = data.title;
+            if (data.concept) p.concept = data.concept;
+            p.brief = data.brief;
+            
+            if (p.status !== data.status) {
+                Store.addHistory(pid, `Status changed to ${data.status}`);
+                p.status = data.status;
+            }
+
+            // Simple CSV parsing for PERs in this prototype
+            if(data.perIds) {
+               p.perIds = data.perIds.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            }
+
+            Store.save();
+        });
+    },
+
+    updateBudget: (pid) => {
+        const p = Store.getProject(pid);
+        Modal.showForm('Set Project Budget', [
+             { label: 'Total Budget (£)', name: 'budget', type: 'text', value: p.budget || 0 }
+        ], (data) => {
+             p.budget = parseFloat(data.budget);
+             Store.addHistory(pid, `Budget updated to £${p.budget}`);
+             Store.save();
+        });
+    },
+
+    addCost: (pid) => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthOpts = months.map(m => ({value: m, label: m}));
+        
+        Modal.showForm('Add Cost Item', [
+            { label: 'Date of Spend', name: 'date', type: 'date', value: new Date().toISOString().slice(0,10) },
+            { label: 'Description (What is the spend?)', name: 'desc', type: 'text' },
+            { label: 'Amount (Excl VAT)', name: 'amount', type: 'text' },
+            { label: 'Shopping Cart Number', name: 'cart', type: 'text' },
+            { label: 'PO Number', name: 'po', type: 'text' },
+            { label: 'In Which Month', name: 'month', type: 'select', options: monthOpts, value: months[new Date().getMonth()] },
+            { label: 'Has this been invoiced? (Type "yes" for Checked)', name: 'invoiced', type: 'text', placeholder: 'yes or no' }
+        ], (data) => {
+            if(!data.amount || !data.desc) return;
+            const p = Store.getProject(pid);
+            if(!p.costs) p.costs = [];
+            
+            p.costs.push({
+                id: Utils.uid(),
+                date: data.date,
+                desc: data.desc,
+                amount: parseFloat(data.amount),
+                cart: data.cart,
+                po: data.po,
+                month: data.month,
+                invoiced: data.invoiced.toLowerCase() === 'yes'
+            });
+            Store.addHistory(pid, `Cost added: £${data.amount} for ${data.desc}`);
+            Store.save();
+        });
+    },
+
+    deleteCost: (pid, cid) => {
+        if(!confirm("Delete this cost item?")) return; // Using native confirm for simplicity in delete action
+        const p = Store.getProject(pid);
+        p.costs = p.costs.filter(c => c.id !== cid);
+        Store.save();
+    },
+
+    addTask: (pid, defaultDesc = '') => {
+        Modal.showForm('New Task', [
+            { label: 'Task Title', name: 'title', type: 'text' },
+            { label: 'Description', name: 'desc', type: 'textarea', value: defaultDesc },
+            { label: 'Due Date', name: 'due', type: 'date', value: new Date().toISOString().slice(0,10) }
+        ], (data) => {
+            if(!data.title) return;
+            const newTask = {
+                id: Utils.uid(),
+                projectId: pid,
+                title: data.title,
+                desc: data.desc || '',
+                due: data.due,
+                priority: 'Medium',
+                completed: false,
+                created: new Date().toISOString()
+            };
+            state.tasks.push(newTask);
+            Store.addHistory(pid, `Task created: ${data.title}`);
+            Store.save();
+        });
+    },
+
+    toggleTask: (tid) => {
+        const task = state.tasks.find(t => t.id === tid);
+        task.completed = !task.completed;
+        Store.addHistory(task.projectId, `Task "${task.title}" marked ${task.completed ? 'complete' : 'open'}`);
+        Store.save();
+    },
+
+    addLink: (pid) => {
+        Modal.showForm('Add Link', [
+            { label: 'Label (e.g. SharePoint Folder)', name: 'label', type: 'text' },
+            { label: 'URL', name: 'url', type: 'text' }
+        ], (data) => {
+            if(!data.label || !data.url) return;
+            const p = Store.getProject(pid);
+            if(!p.links) p.links = [];
+            p.links.push({ id: Utils.uid(), label: data.label, url: data.url });
+            Store.save();
+        });
+    },
+
+    deleteLink: (pid, lid) => {
+        const p = Store.getProject(pid);
+        p.links = p.links.filter(l => l.id !== lid);
+        Store.save();
+    },
+
+    addContact: (pid) => {
+        Modal.showForm('Add Contact', [
+            { label: 'Name', name: 'name', type: 'text' },
+            { label: 'Role', name: 'role', type: 'text' },
+            { label: 'Email', name: 'email', type: 'email' }
+        ], (data) => {
+            if(!data.name) return;
+            const p = Store.getProject(pid);
+            if(!p.stakeholders) p.stakeholders = [];
+            p.stakeholders.push({ name: data.name, role: data.role, email: data.email });
+            Store.save();
+        });
+    },
+
+    addMeeting: (pid) => {
+        Modal.showForm('Log Meeting', [
+            { label: 'Title', name: 'title', type: 'text' },
+            { label: 'Date', name: 'date', type: 'date', value: new Date().toISOString().slice(0,10) },
+            { label: 'Meeting Notes', name: 'notes', type: 'textarea' },
+            { label: 'Transcript', name: 'transcript', type: 'textarea' }
+        ], (data) => {
+            if(!data.title) return;
+            state.meetings.push({
+                id: Utils.uid(),
+                projectId: pid,
+                title: data.title,
+                date: data.date,
+                notes: data.notes || '',
+                transcript: data.transcript || '',
+                attendees: 'Team',
+                actions: []
+            });
+            Store.addHistory(pid, `Meeting logged: ${data.title}`);
+            Store.save();
+        });
+    },
+
+    addActionItem: (pid, mid) => {
+        Modal.showForm('Add Action Item', [
+            { label: 'Action Description', name: 'text', type: 'text' }
+        ], (data) => {
+            if(!data.text) return;
+            const meeting = state.meetings.find(m => m.id === mid);
+            meeting.actions.push({ id: Utils.uid(), text: data.text, converted: false });
+            Store.save();
+        });
+    },
+
+    convertActionToTask: (pid, mid, aid) => {
+        const meeting = state.meetings.find(m => m.id === mid);
+        const action = meeting.actions.find(a => a.id === aid);
+        
+        const newTask = {
+            id: Utils.uid(),
+            projectId: pid,
+            title: `[Action] ${action.text}`,
+            desc: `From meeting: ${meeting.title}`,
+            due: new Date().toISOString().slice(0,10),
+            priority: 'Medium',
+            completed: false,
+            created: new Date().toISOString()
+        };
+        state.tasks.push(newTask);
+        action.converted = true;
+        Store.addHistory(pid, `Action converted to task: ${action.text}`);
+        Store.save();
+    },
+
+    managePERs: () => {
+        Modal.showForm('Create New PER Objective', [
+            { label: 'Objective Title', name: 'title', type: 'text' },
+            { label: 'Period (e.g. 2025/26)', name: 'period', type: 'text' }
+        ], (data) => {
+            if(!data.title) return;
+            state.pers.push({ id: Utils.uid(), title: data.title, period: data.period, completed: false });
+            Store.save();
+        });
+    },
+
+    viewPERDetails: (perId) => {
+        const per = state.pers.find(p => p.id === perId);
+        const linked = state.projects.filter(p => p.perIds && p.perIds.includes(perId));
+        
+        let html = `<p><strong>Period:</strong> ${per.period}</p>`;
+        
+        if(linked.length === 0) {
+            html += '<p style="color:#666; font-style:italic; margin-top:16px;">No projects linked to this objective.</p>';
+        } else {
+            html += '<p style="margin-top:16px; margin-bottom:8px;"><strong>Linked Projects:</strong></p>';
+            html += '<div style="background:#f9f9f9; border:1px solid #eee; border-radius:4px;">';
+            linked.forEach(p => {
+                html += `
+                <div class="list-row interactive" style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;" onclick="Modal.close(); app.router('project', '${p.id}')">
+                    <span style="color:var(--deep-water-navy); font-weight:600;">${p.title}</span>
+                    <span class="tag status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span>
+                </div>`;
+            });
+            html += '</div>';
+            html += `<p style="font-size:11px; color:#888; margin-top:12px;">*Click a project to view its details.</p>`;
+        }
+        
+        Modal.showInfo(per.title, html);
+    }
+};
+
+// Start
+app.init();
+
+    </script>
+</body>
+</html>
